@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b3a6b">
+<title>Recherche de fuite</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{--navy:#1b3a6b;--bleu:#2b57a0;--fond:#eef2f7;--carte:#fff;--bord:#d7dce4;--txt:#1d2433;--gris:#667;--vert:#1a7a3c;--rouge:#b3261e;--or:#c9a227}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--fond);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:17px}
+  header{position:sticky;top:0;z-index:20;background:var(--navy);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;min-height:56px}
+  header .retour{background:none;border:none;color:#fff;font-size:26px;padding:0 6px 0 0;line-height:1}
+  header .t{flex:1;font-weight:700;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  header .s{font-size:12px;color:#c7d5ee;font-weight:400}
+  .pastille{background:var(--or);color:#fff;border-radius:20px;padding:3px 10px;font-size:13px;font-weight:700}
+  .pastille.ok{background:#2e8b57}
+  main{padding:14px 14px 120px;max-width:720px;margin:0 auto}
+  .carte{background:var(--carte);border:1px solid var(--bord);border-radius:14px;padding:16px;margin-bottom:14px}
+  h2{font-size:19px;margin:4px 0 12px;color:var(--navy)}
+  h3{font-size:15px;margin:18px 0 8px;color:var(--bleu);text-transform:uppercase;letter-spacing:.6px}
+  .btn{display:block;width:100%;border:none;border-radius:12px;padding:16px;font-size:18px;font-weight:700;background:var(--bleu);color:#fff;margin:8px 0;text-align:center;text-decoration:none}
+  .btn:active{opacity:.85}
+  .btn.vert{background:var(--vert)}.btn.gris{background:#e4e8ee;color:#333}.btn.or{background:var(--or)}
+  .btn.pt{display:inline-block;width:auto;padding:9px 14px;font-size:15px;margin:4px 6px 4px 0}
+  .mini{font-size:13.5px;color:var(--gris)}
+  .nom{display:block;width:100%;text-align:left;background:#fff;border:2px solid var(--bord);border-radius:12px;padding:18px;font-size:19px;font-weight:600;margin-bottom:10px;color:var(--txt)}
+  .dossier{display:block;background:#fff;border:1px solid var(--bord);border-left:6px solid var(--bleu);border-radius:12px;padding:14px;margin-bottom:12px}
+  .dossier.urg{border-left-color:var(--rouge)}
+  .dossier .d{font-weight:800;color:var(--navy)}
+  .dossier .c{font-size:18px;font-weight:700;margin:3px 0}
+  .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:12.5px;font-weight:700;background:#eef2f8;color:var(--navy);margin:4px 4px 0 0}
+  .badge.r{background:#fbe2df;color:var(--rouge)}.badge.v{background:#e4f4e9;color:var(--vert)}.badge.o{background:#fff4dc;color:#8a5a00}
+  .onglets{position:fixed;bottom:0;left:0;right:0;z-index:20;display:flex;background:#fff;border-top:1px solid var(--bord);padding-bottom:env(safe-area-inset-bottom)}
+  .onglets button{flex:1;background:none;border:none;padding:10px 2px 12px;font-size:12.5px;color:var(--gris);font-weight:600}
+  .onglets button b{display:block;font-size:22px;margin-bottom:2px}
+  .onglets button.actif{color:var(--bleu);background:#eef3fb}
+  .info{display:flex;padding:9px 0;border-bottom:1px solid #eef1f5}
+  .info .l{width:38%;color:var(--gris);font-size:14px;padding-right:8px}
+  .info .v{flex:1;font-weight:600;white-space:pre-wrap;word-break:break-word}
+  a.lien{color:var(--bleu);font-weight:700;text-decoration:none}
+  .q{margin:0 0 18px}
+  .q .lbl{font-weight:700;margin-bottom:8px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{border:2px solid var(--bord);background:#fff;border-radius:22px;padding:10px 14px;font-size:15.5px;font-weight:600;color:var(--txt)}
+  .chip.sel{background:var(--bleu);border-color:var(--bleu);color:#fff}
+  input[type=text],input[type=number],textarea{width:100%;font-size:17px;padding:13px;border:2px solid var(--bord);border-radius:10px;font-family:inherit;background:#fff}
+  textarea{min-height:90px}
+  .ctrl{border:1px solid var(--bord);border-radius:12px;padding:12px;margin-bottom:10px;background:#fff}
+  .ctrl .lbl{font-weight:700;margin-bottom:3px}
+  .ctrl .aide{font-size:13px;color:var(--gris);margin-bottom:8px}
+  .ctrl .chips .chip{padding:9px 12px;font-size:14.5px}
+  .chip.ok.sel{background:var(--vert);border-color:var(--vert)}
+  .chip.def.sel{background:var(--rouge);border-color:var(--rouge)}
+  .chip.nv.sel,.chip.na.sel{background:#7a8496;border-color:#7a8496}
+  .ctrl.defaut{border-color:var(--rouge);background:#fff8f7}
+  .ctrl.okk{border-color:#9fd3b0}
+  .camgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .cam{background:#fff;border:2px solid var(--bord);border-radius:14px;padding:14px 8px;text-align:center;font-weight:700;font-size:15px;color:var(--navy)}
+  .cam b{display:block;font-size:30px;margin-bottom:4px}
+  .cam .n{display:inline-block;margin-top:4px;background:var(--bleu);color:#fff;border-radius:20px;padding:1px 9px;font-size:12.5px}
+  .vgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+  .vg{position:relative;border-radius:10px;overflow:hidden;background:#dde3ec;aspect-ratio:1}
+  .vg img{width:100%;height:100%;object-fit:cover;display:block}
+  .vg .e{position:absolute;right:4px;top:4px;background:rgba(0,0,0,.55);color:#fff;border-radius:10px;font-size:12px;padding:1px 6px}
+  .vg .k{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:3px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .toast{position:fixed;left:14px;right:14px;bottom:84px;z-index:40;background:#1d2433;color:#fff;border-radius:12px;padding:14px 16px;font-size:15.5px;display:none;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+  .modal{position:fixed;inset:0;z-index:50;background:rgba(10,20,40,.6);display:none;align-items:flex-end}
+  .modal .bx{background:#fff;width:100%;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto}
+  .modal img{width:100%;max-height:45vh;object-fit:contain;border-radius:10px;background:#000}
+  .prog{height:8px;background:#e4e8ee;border-radius:6px;overflow:hidden;margin:6px 0 2px}
+  .prog div{height:100%;background:var(--vert)}
+  .alerte{background:#fff4dc;color:#8a5a00;border-radius:10px;padding:12px;font-size:15px;margin-bottom:12px}
+  .alerte.r{background:#fbe9e7;color:var(--rouge)}
+  .centre{text-align:center}
+  .demo{background:#c9a227;color:#fff;text-align:center;font-size:13px;font-weight:700;padding:4px}
+</style>
+</head>
+<body>
+<div id="demo-band" class="demo" style="display:none">MODE DÉMO — rien n'est envoyé sur le SharePoint</div>
+<header><button class="retour" id="h-retour" style="display:none" onclick="retour()">‹</button><div class="t" id="h-titre">Recherche de fuite<div class="s">MESSENT</div></div><span id="h-file" class="pastille ok" style="display:none" onclick="voirFile()"></span></header>
+<main id="vue"></main>
+<nav class="onglets" id="onglets" style="display:none"></nav>
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal" onclick="if(event.target===this)fermerModal()"><div class="bx" id="modal-bx"></div></div>
+<input type="file" id="camera" accept="image/*" capture="environment" style="display:none">
+<input type="file" id="galerie" accept="image/*" multiple style="display:none">
+
+<script src="config.js"></script>
+<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+<script>if(!window.msal){document.write('<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"><\/script>');}</script>
+<script>
+"use strict";
+/* =====================================================================
+   RECHERCHE DE FUITE — appli téléphone des techniciens (MESSENT)
+   - lit donnees_fuites.json (écrit par l'appli bureau) sur le SharePoint
+   - écrit dans le dossier de l'intervention :
+       PHOTOS/<CATEGORIE>_<date>_<xx>.jpg
+       TERRAIN/terrain_<TECHNICIEN>.json  (questionnaire + liste des photos)
+   - hors connexion : tout est gardé sur le téléphone et envoyé dès que le réseau revient
+   ===================================================================== */
+const CFG = window.RDF_CONFIG || {};
+const DEMO = /[?&]demo=1/.test(location.search) || CFG.clientId === "A_REMPLIR" && /[?&]demo/.test(location.search);
+const SCOPES = ["Files.ReadWrite.All", "Sites.Read.All"];
+const GRAPH = "https://graph.microsoft.com/v1.0";
+
+/* ---------- QUESTIONNAIRE (QCM toiture terrasse) ---------- */
+const PHOTO_CATS = [
+  { k: "VUE GENERALE", ic: "🏢", l: "Vue d'ensemble toiture" },
+  { k: "INTERIEUR", ic: "💧", l: "Infiltration intérieure" },
+  { k: "EVACUATIONS", ic: "🕳️", l: "Évacuations / trop-plein" },
+  { k: "RELEVES", ic: "🧱", l: "Relevés / acrotères" },
+  { k: "DEFAUT", ic: "⚠️", l: "Défaut constaté" },
+  { k: "TEST", ic: "🚿", l: "Test (eau, fumée…)" },
+  { k: "REPARATION", ic: "🛠️", l: "Réparation faite" },
+  { k: "AUTRE", ic: "📷", l: "Autre" }
+];
+const CTRL = ["Bon", "Défaut", "Non vu", "Sans objet"];
+const QCM = [
+  { s: "Arrivée sur place", q: [
+    { id: "meteo", t: "un", l: "Météo pendant l'intervention", o: ["Sec", "Humide", "Pluie", "Vent fort", "Gel / neige"] },
+    { id: "pluie48", t: "un", l: "A-t-il plu dans les 48 h avant ?", o: ["Oui", "Non", "Je ne sais pas"] },
+    { id: "rencontre", t: "texte", l: "Personne rencontrée sur place", ph: "Nom, qualité (gardien, occupant…)" },
+    { id: "accesReel", t: "un", l: "Accès à la toiture", o: ["Trappe / escalier", "Depuis un logement", "Échelle", "Nacelle", "Autre"] }
+  ]},
+  { s: "La toiture", q: [
+    { id: "batiment", t: "un", l: "Type de bâtiment", o: ["Maison", "Immeuble logements", "Bureaux / commerce", "Industriel / entrepôt", "Établissement public", "Autre"] },
+    { id: "usage", t: "un", l: "Usage de la terrasse", o: ["Inaccessible", "Technique", "Accessible piétons", "Terrasse privative", "Végétalisée", "Parking"] },
+    { id: "porteur", t: "un", l: "Support (élément porteur)", o: ["Béton", "Bac acier", "Bois / panneaux", "Je ne sais pas"] },
+    { id: "revetement", t: "un", l: "Revêtement d'étanchéité", o: ["Bitume autoprotégé", "Bitume sous protection", "PVC", "EPDM", "TPO / FPO", "Résine / SEL", "Asphalte", "Je ne sais pas"] },
+    { id: "protection", t: "un", l: "Protection", o: ["Aucune / autoprotégée", "Gravillons", "Dalles sur plots", "Dallage / carrelage", "Végétalisation"] },
+    { id: "isolation", t: "un", l: "Isolant sous l'étanchéité ?", o: ["Oui", "Non", "Je ne sais pas"] },
+    { id: "age", t: "un", l: "Âge apparent de l'étanchéité", o: ["Moins de 5 ans", "5 à 15 ans", "15 à 25 ans", "Plus de 25 ans", "Je ne sais pas"] },
+    { id: "etat", t: "un", l: "État général", o: ["Bon", "Moyen", "Mauvais", "Très dégradé"] },
+    { id: "pente", t: "un", l: "Pente", o: ["Plate (eau qui stagne)", "Faible pente", "Pente nette"] },
+    { id: "surface", t: "nombre", l: "Surface approximative (m²)" },
+    { id: "nbEP", t: "nombre", l: "Nombre d'évacuations d'eau pluviale (EP)" },
+    { id: "tropPlein", t: "un", l: "Trop-plein présent ?", o: ["Oui", "Non", "Je ne sais pas"] }
+  ]},
+  { s: "Infiltration à l'intérieur", q: [
+    { id: "vuInt", t: "un", l: "As-tu vu l'infiltration à l'intérieur ?", o: ["Oui", "Non", "Pas d'accès"] },
+    { id: "locInt", t: "plusieurs", l: "Où apparaît l'eau ?", o: ["Plafond (milieu de pièce)", "Plafond en bord de mur", "Angle de pièce", "Sous une descente EP", "Près d'une traversée / équipement", "Mur", "Autour d'une fenêtre", "Autre"] },
+    { id: "quand", t: "plusieurs", l: "Quand l'eau apparaît-elle ?", o: ["À chaque pluie", "Seulement forte pluie", "Pluie + vent", "Après longue pluie", "Sans lien avec la pluie", "Je ne sais pas"] },
+    { id: "traces", t: "plusieurs", l: "Traces constatées", o: ["Auréoles", "Goutte-à-goutte", "Moisissures", "Faux-plafond abîmé", "Peinture cloquée", "Aucune"] },
+    { id: "repere", t: "texte", l: "Repère : où est la fuite par rapport à la toiture ?", ph: "ex. sous l'angle nord-est, à 3 m de l'acrotère…" }
+  ]},
+  { s: "Points de contrôle en toiture", ctrl: true, q: [
+    { id: "c_ep", l: "Évacuations EP (naissances)", a: "Bouchées ? décollées ? platine fissurée ?" },
+    { id: "c_crap", l: "Crapaudines / grilles", a: "Présentes, propres ?" },
+    { id: "c_tp", l: "Trop-plein", a: "Présent, dégagé, bien raccordé ?" },
+    { id: "c_rel", l: "Relevés d'étanchéité", a: "Hauteur ≥ 15 cm au-dessus de la protection ? décollés ?" },
+    { id: "c_tete", l: "Tête de relevé (bande solin, engravure, costière)", a: "Mastic, fixation, protection en haut du relevé" },
+    { id: "c_acro", l: "Acrotère / couvertine", a: "Fissures, joints de couvertine, pente vers l'intérieur" },
+    { id: "c_joints", l: "Joints / recouvrements des lés", a: "Soudures ouvertes, lés qui se soulèvent" },
+    { id: "c_courante", l: "Partie courante", a: "Cloques, plis, fissures, faïençage, perforations" },
+    { id: "c_flache", l: "Stagnation d'eau (flaches)", a: "Zones où l'eau reste après la pluie" },
+    { id: "c_vege", l: "Végétation / mousses / débris", a: "Racines, feuilles, terre" },
+    { id: "c_trav", l: "Traversées (ventilations, crosses, gaines)", a: "Collerettes, manchons, raccords" },
+    { id: "c_lant", l: "Lanterneaux / exutoires / coupoles", a: "Costières, joints, dômes fissurés" },
+    { id: "c_equip", l: "Équipements (clim, VMC, supports)", a: "Plots, pieds posés directement sur la membrane" },
+    { id: "c_dil", l: "Joint de dilatation", a: "Couvre-joint, soufflet, relevés" },
+    { id: "c_seuil", l: "Seuils de porte / porte-fenêtre", a: "Hauteur du relevé sous le seuil" },
+    { id: "c_facade", l: "Murs / façades au-dessus", a: "Fissures, enduit, menuiseries (fuite pas forcément de la toiture)" },
+    { id: "c_gc", l: "Garde-corps / fixations traversantes", a: "Platines, scellements dans l'étanchéité" }
+  ]},
+  { s: "Recherche effectuée", q: [
+    { id: "methodes", t: "plusieurs", l: "Méthodes utilisées", o: ["Visuelle", "Mise en eau / arrosage", "Fumigène", "Gaz traceur", "Colorant", "Humidimètre", "Caméra thermique", "Sondage / ouverture"] },
+    { id: "detailTest", t: "texte", l: "Détail des tests (zone, durée, résultat)", ph: "ex. arrosage EP nord 20 min → eau au plafond après 10 min" }
+  ]},
+  { s: "Conclusion", q: [
+    { id: "trouvee", t: "un", l: "Fuite trouvée ?", o: ["Oui, localisée", "Probable", "Non trouvée"] },
+    { id: "origine", t: "plusieurs", l: "Origine", o: ["Évacuation EP", "Relevé", "Joint / recouvrement", "Membrane percée / fissurée", "Traversée / équipement", "Lanterneau", "Acrotère / couvertine", "Joint de dilatation", "Seuil", "Façade / menuiserie", "Condensation", "Autre"] },
+    { id: "descFuite", t: "texte", l: "Explique en quelques mots", ph: "Ce que tu as vu, pourquoi l'eau passe…" },
+    { id: "reparation", t: "un", l: "Réparation faite sur place", o: ["Aucune", "Provisoire", "Définitive"] },
+    { id: "descRep", t: "texte", l: "Réparation réalisée", ph: "Produit, surface, ce qui a été fait" },
+    { id: "precos", t: "plusieurs", l: "Ce qu'il faudrait faire", o: ["Nettoyage / entretien EP", "Réparation ponctuelle", "Reprise des relevés", "Réfection partielle", "Réfection complète", "Investigation complémentaire", "Voir façade / menuiserie"] },
+    { id: "urgence", t: "un", l: "Urgence des travaux", o: ["Faible", "À prévoir", "Urgent"] },
+    { id: "remarques", t: "texte", l: "Autres remarques", ph: "Tout ce qui peut aider à rédiger le rapport (tu peux dicter avec le micro du clavier)" }
+  ]}
+];
+
+/* ---------- état ---------- */
+let msalApp = null, compte = null, driveId = null;
+let DATA = null;           // donnees_fuites.json
+let MOI = localStorage.getItem("rdf_moi") || "";
+let vueCourante = "accueil", dossierId = null, ongletDossier = "infos";
+let photoCatEnCours = null, photoPointEnCours = null;
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => (s == null ? "" : String(s)).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const pad = (n) => (n < 10 ? "0" : "") + n;
+const fmtDate = (iso) => iso ? iso.split("-").reverse().join("/") : "";
+const jour = (iso) => ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."][new Date(iso + "T12:00").getDay()];
+const today = () => { const d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); };
+const nowISO = () => { const d = new Date(); return today() + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds()); };
+const slug = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "");
+function toast(t, ms) { const el = $("toast"); el.innerHTML = t; el.style.display = "block"; clearTimeout(el._t); el._t = setTimeout(() => el.style.display = "none", ms || 3000); }
+
+/* ---------- stockage local (IndexedDB) : file d'envoi + aperçus photos ---------- */
+let db = null;
+function ouvrirDB() {
+  return new Promise((ok, ko) => {
+    const r = indexedDB.open("rdf", 1);
+    r.onupgradeneeded = () => { const d = r.result; d.createObjectStore("file", { keyPath: "path" }); d.createObjectStore("apercus", { keyPath: "id" }); };
+    r.onsuccess = () => { db = r.result; ok(); };
+    r.onerror = () => ko(r.error);
+  });
+}
+function idb(store, mode, fn) {
+  return new Promise((ok, ko) => { const tx = db.transaction(store, mode); const st = tx.objectStore(store); const r = fn(st); tx.oncomplete = () => ok(r && r.result); tx.onerror = () => ko(tx.error); });
+}
+const fileAjouter = (item) => idb("file", "readwrite", (s) => s.put(item));
+const fileListe = () => idb("file", "readonly", (s) => s.getAll());
+const fileRetirer = (path) => idb("file", "readwrite", (s) => s.delete(path));
+const apercuPut = (id, blob) => idb("apercus", "readwrite", (s) => s.put({ id, blob }));
+const apercuGet = (id) => idb("apercus", "readonly", (s) => s.get(id));
+
+/* ---------- connexion Microsoft ---------- */
+async function initAuth() {
+  if (DEMO) return true;
+  if (!window.msal) { afficherErreur("Bibliothèque Microsoft non chargée. Vérifie la connexion internet puis rouvre l'appli."); return false; }
+  if (!CFG.clientId || CFG.clientId === "A_REMPLIR") { afficherErreur("L'appli n'est pas encore configurée (config.js : clientId). Voir INSTALLATION.md."); return false; }
+  msalApp = new msal.PublicClientApplication({
+    auth: { clientId: CFG.clientId, authority: "https://login.microsoftonline.com/" + CFG.tenant, redirectUri: location.origin + location.pathname },
+    cache: { cacheLocation: "localStorage" }
+  });
+  try { const r = await msalApp.handleRedirectPromise(); if (r && r.account) compte = r.account; } catch (e) { console.warn(e); }
+  if (!compte) { const a = msalApp.getAllAccounts(); if (a.length) compte = a[0]; }
+  return !!compte;
+}
+function connexion() { msalApp.loginRedirect({ scopes: SCOPES, prompt: "select_account" }); }
+async function jeton() {
+  if (DEMO) return "demo";
+  try { return (await msalApp.acquireTokenSilent({ scopes: SCOPES, account: compte })).accessToken; }
+  catch (e) {
+    if (e instanceof msal.InteractionRequiredAuthError) { msalApp.acquireTokenRedirect({ scopes: SCOPES, account: compte }); }
+    throw e;
+  }
+}
+async function graph(url, opts) {
+  opts = opts || {};
+  const t = await jeton();
+  opts.headers = Object.assign({ Authorization: "Bearer " + t }, opts.headers || {});
+  const r = await fetch(url.indexOf("http") === 0 ? url : GRAPH + url, opts);
+  if (!r.ok) { const txt = await r.text().catch(() => ""); const e = new Error("Graph " + r.status + " " + txt.substring(0, 200)); e.status = r.status; throw e; }
+  return r;
+}
+async function trouverDrive() {
+  if (driveId) return driveId;
+  driveId = localStorage.getItem("rdf_drive");
+  if (driveId) return driveId;
+  try {
+    const r = await graph("/sites/" + CFG.siteHost + ":" + CFG.sitePath + ":/drive?$select=id");
+    driveId = (await r.json()).id;
+  } catch (e) {
+    if (!CFG.shareUrl) throw e;
+    const b64 = btoa(unescape(encodeURIComponent(CFG.shareUrl))).replace(/=+$/, "").replace(/\//g, "_").replace(/\+/g, "-");
+    const r = await graph("/shares/u!" + b64 + "/driveItem?$select=parentReference");
+    driveId = (await r.json()).parentReference.driveId;
+  }
+  localStorage.setItem("rdf_drive", driveId);
+  return driveId;
+}
+const encChemin = (p) => p.split("/").filter(Boolean).map(encodeURIComponent).join("/");
+async function lireFichier(path) {
+  const d = await trouverDrive();
+  const r = await graph("/drives/" + d + "/root:/" + encChemin(path) + ":/content", { cache: "no-store" });
+  return r;
+}
+async function ecrireFichier(path, blob, type) {
+  const d = await trouverDrive();
+  await graph("/drives/" + d + "/root:/" + encChemin(path) + ":/content", { method: "PUT", headers: { "Content-Type": type || "application/octet-stream" }, body: blob });
+}
+
+/* ---------- données du bureau ---------- */
+function demoData() {
+  return { techniciens: ["Kévin MARTIN", "Lucas BERNARD", "Thomas PETIT"], interventions: [
+    { id: "d1", sa: "7326012", date: today(), client: "SDC RÉSIDENCE LES TILLEULS", typeClient: "Agence / syndic", contact: "Mme Durand (Foncia)", tel: "05 49 00 00 00", mail: "", adresse: "12 rue Carnot 86000 POITIERS", ailleurs: true, chantier: "Résidence Les Tilleuls", adChantier: "4 allée des Tilleuls 86180 BUXEROLLES", batiment: "Bât. B", etage: "4e (dernier)", appart: "42", occupant: "Mme Dupont", qualite: "Locataire", telOcc: "06 22 33 44 55", refClient: "OS 2026-145", contactSite: "M. Morel (gardien)", telSite: "06 00 00 00 00", accesInfo: "Clés chez le gardien, trappe au 4e", revetement: "Bitume (SBS / APP)", protection: "Gravillons", usage: "Inaccessible (sauf entretien)", acces: "Trappe / escalier intérieur", surface: "420", niveaux: "R+4", description: "Infiltration au plafond de la chambre du T3 au 4e étage, côté nord, à chaque forte pluie depuis 2 mois.", tech: "Kévin MARTIN", datePrevue: today(), heure: "8h30", urgence: true, programme: true, dossier: "SP:CHANTIERS\\2026\\RECHERCHE DE FUITE\\7326012 - RESIDENCE LES TILLEULS" },
+    { id: "d2", sa: "7326013", date: today(), client: "M. et Mme LEROY", tel: "06 11 22 33 44", adresse: "8 impasse des Lilas 86280 SAINT-BENOIT", revetement: "PVC", protection: "Aucune (membrane apparente)", acces: "Échelle nécessaire", surface: "35", description: "Tache au plafond du séjour sous la terrasse.", tech: "Kévin MARTIN", datePrevue: "2026-11-24", heure: "14h", programme: true, dossier: "SP:CHANTIERS\\2026\\RECHERCHE DE FUITE\\7326013 - LEROY" }
+  ]};
+}
+async function chargerDonnees(silencieux) {
+  if (DEMO) { DATA = demoData(); return true; }
+  try {
+    const r = await lireFichier(CFG.dataPath);
+    DATA = await r.json();
+    localStorage.setItem("rdf_data", JSON.stringify(DATA));
+    localStorage.setItem("rdf_data_date", nowISO());
+    return true;
+  } catch (e) {
+    const c = localStorage.getItem("rdf_data");
+    if (c) { DATA = JSON.parse(c); if (!silencieux) toast("Hors connexion : liste du " + (localStorage.getItem("rdf_data_date") || "").replace("T", " à ").substring(0, 18)); return true; }
+    afficherErreur("Impossible de lire les dossiers sur le SharePoint.<br><span class='mini'>" + esc(e.message) + "</span>");
+    return false;
+  }
+}
+const mesDossiers = () => (DATA ? DATA.interventions : []).filter((d) => (d.tech === MOI || d.tech2 === MOI) && !d.facture && !d.rapport && d.programme)
+  .sort((a, b) => (a.datePrevue || "9") < (b.datePrevue || "9") ? -1 : 1);
+const dossierPath = (d) => d.dossier && d.dossier.indexOf("SP:") === 0 ? d.dossier.substring(3).replace(/\\/g, "/") : "";
+const lieu = (d) => d.ailleurs ? (d.adChantier || d.adresse) : d.adresse;
+const complement = (d) => [d.batiment, d.etage ? "étage " + d.etage : "", d.appart ? "appt/lot " + d.appart : ""].filter(Boolean).join(" · ");
+
+/* ---------- état terrain par dossier (sur le téléphone) ---------- */
+const cleEtat = (id) => "rdf_etat_" + id + "_" + slug(MOI);
+function etat(id) {
+  const s = localStorage.getItem(cleEtat(id));
+  return s ? JSON.parse(s) : { reponses: {}, notes: {}, photos: [], etat: "", debut: "", fin: "" };
+}
+function sauverEtat(id, e) { localStorage.setItem(cleEtat(id), JSON.stringify(e)); planifierEnvoiFiche(id); }
+
+function synthese(e) {
+  const out = [];
+  QCM.forEach((sec) => sec.q.forEach((q) => {
+    const v = e.reponses[q.id];
+    if (sec.ctrl) {
+      if (!v) return;
+      const n = (e.notes[q.id] || "").trim();
+      out.push({ section: sec.s, q: q.l, r: v + (n ? " — " + n : ""), defaut: v === "Défaut" });
+    } else {
+      if (v == null || v === "" || (Array.isArray(v) && !v.length)) return;
+      out.push({ section: sec.s, q: q.l, r: Array.isArray(v) ? v.join(", ") : String(v) });
+    }
+  }));
+  return out;
+}
+const envoisFiche = {};
+function planifierEnvoiFiche(id) {
+  clearTimeout(envoisFiche[id]);
+  envoisFiche[id] = setTimeout(() => mettreFicheEnFile(id), 2500);
+}
+async function mettreFicheEnFile(id) {
+  const d = DATA.interventions.find((x) => x.id === id); if (!d) return;
+  const base = dossierPath(d); if (!base) return;
+  const e = etat(id);
+  const fiche = { app: "RDF-MESSENT", version: 1, interventionId: id, sa: d.sa || "", client: d.client, technicien: MOI, etat: e.etat || "en_cours",
+    debut: e.debut, fin: e.fin, maj: nowISO(), reponses: e.reponses, notes: e.notes,
+    photos: e.photos.map((p) => ({ fichier: p.fichier, categorie: p.categorie, point: p.point || "", commentaire: p.commentaire || "", date: p.date })),
+    synthese: synthese(e) };
+  const blob = new Blob([JSON.stringify(fiche, null, 1)], { type: "application/json" });
+  await fileAjouter({ path: base + "/TERRAIN/terrain_" + slug(MOI) + ".json", blob, type: "application/json", genre: "fiche", ajout: Date.now() });
+  majFile(); traiterFile();
+}
+
+/* ---------- file d'envoi ---------- */
+let envoiEnCours = false;
+async function majFile() {
+  const l = await fileListe(); const n = l.length, el = $("h-file");
+  if (!MOI) { el.style.display = "none"; return; }
+  el.style.display = "inline-block";
+  el.className = "pastille" + (n ? "" : " ok");
+  el.textContent = n ? "⏳ " + n + " à envoyer" : "✓ à jour";
+}
+async function traiterFile() {
+  if (envoiEnCours) return; envoiEnCours = true;
+  try {
+    let l = await fileListe();
+    l.sort((a, b) => (a.genre === "fiche") - (b.genre === "fiche") || a.ajout - b.ajout);   // photos d'abord, fiche ensuite
+    for (const it of l) {
+      if (!navigator.onLine && !DEMO) break;
+      try {
+        if (DEMO) await new Promise((r) => setTimeout(r, 400));
+        else await ecrireFichier(it.path, it.blob, it.type);
+        await fileRetirer(it.path);
+        if (it.photoId) marquerPhotoEnvoyee(it.photoId);
+      } catch (e) { console.warn("envoi", it.path, e); if (e.status === 401 || e.status === 403) toast("Accès refusé au dossier SharePoint (" + e.status + ")", 5000); break; }
+      majFile();
+    }
+  } finally { envoiEnCours = false; majFile(); }
+}
+function marquerPhotoEnvoyee(photoId) {
+  const [id] = photoId.split("|");
+  const e = etat(id); const p = e.photos.find((x) => x.id === photoId);
+  if (p && !p.envoye) { p.envoye = true; localStorage.setItem(cleEtat(id), JSON.stringify(e)); if (vueCourante === "dossier" && ongletDossier === "photos") rendreDossier(); }
+}
+async function voirFile() {
+  const l = await fileListe();
+  toast(l.length ? l.length + " élément(s) en attente d'envoi. Ils partiront dès qu'il y aura du réseau." : "Tout est envoyé sur le SharePoint ✓", 4000);
+  traiterFile();
+}
+window.addEventListener("online", () => traiterFile());
+setInterval(() => traiterFile(), 30000);
+
+/* ---------- photos ---------- */
+function prendrePhoto(cat, point) { photoCatEnCours = cat; photoPointEnCours = point || ""; $("camera").value = ""; $("camera").click(); }
+function depuisGalerie(cat) { photoCatEnCours = cat; photoPointEnCours = ""; $("galerie").value = ""; $("galerie").click(); }
+$("camera").addEventListener("change", (ev) => traiterPhotos(ev.target.files, true));
+$("galerie").addEventListener("change", (ev) => traiterPhotos(ev.target.files, false));
+async function reduire(file) {
+  const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+  const max = 2048, k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas"); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  const big = await new Promise((r) => c.toBlob(r, "image/jpeg", 0.85));
+  const kt = Math.min(1, 360 / Math.max(bmp.width, bmp.height));
+  const t = document.createElement("canvas"); t.width = Math.round(bmp.width * kt); t.height = Math.round(bmp.height * kt);
+  t.getContext("2d").drawImage(bmp, 0, 0, t.width, t.height);
+  const mini = await new Promise((r) => t.toBlob(r, "image/jpeg", 0.7));
+  return { big, mini };
+}
+async function traiterPhotos(files, demanderComment) {
+  if (!files || !files.length) return;
+  const d = DATA.interventions.find((x) => x.id === dossierId); const base = dossierPath(d);
+  if (!base) { toast("Ce dossier n'a pas encore de dossier SharePoint : préviens le bureau.", 5000); return; }
+  const e = etat(dossierId);
+  if (!e.debut) e.debut = nowISO();
+  let dernier = null;
+  for (const f of files) {
+    try {
+      const { big, mini } = await reduire(f);
+      const n = new Date(), stamp = n.getFullYear() + pad(n.getMonth() + 1) + pad(n.getDate()) + "_" + pad(n.getHours()) + pad(n.getMinutes()) + pad(n.getSeconds());
+      const cat = photoPointEnCours ? "CONTROLE_" + slug(photoPointEnCours).substring(0, 30) : photoCatEnCours;
+      const fichier = slug(cat) + "_" + stamp + "_" + slug(MOI).substring(0, 3) + Math.floor(Math.random() * 90 + 10) + ".jpg";
+      const photoId = dossierId + "|" + fichier;
+      await apercuPut(photoId, mini);
+      const p = { id: photoId, fichier, categorie: photoPointEnCours ? "Contrôle : " + photoPointEnCours : (PHOTO_CATS.find((c) => c.k === photoCatEnCours) || {}).l || photoCatEnCours, point: photoPointEnCours, commentaire: "", date: nowISO(), envoye: false };
+      e.photos.push(p); dernier = p;
+      await fileAjouter({ path: base + "/PHOTOS/" + fichier, blob: big, type: "image/jpeg", genre: "photo", photoId, ajout: Date.now() });
+    } catch (err) { console.error(err); toast("Photo illisible : " + esc(err.message), 4000); }
+  }
+  sauverEtat(dossierId, e); majFile(); traiterFile();
+  rendreDossier();
+  if (demanderComment && dernier) ouvrirPhoto(dernier.id, true);
+  else toast(files.length + " photo(s) ajoutée(s) ✓");
+}
+async function ouvrirPhoto(photoId, nouvelle) {
+  const e = etat(dossierId); const p = e.photos.find((x) => x.id === photoId); if (!p) return;
+  const a = await apercuGet(photoId); const url = a ? URL.createObjectURL(a.blob) : "";
+  $("modal-bx").innerHTML = (url ? "<img src='" + url + "'>" : "") +
+    "<div style='margin:10px 0 6px;font-weight:700'>" + esc(p.categorie) + "</div>" +
+    "<textarea id='m-com' placeholder='Commentaire (facultatif) : ce que montre la photo, où…'>" + esc(p.commentaire) + "</textarea>" +
+    "<button class='btn vert' onclick=\"enregistrerCommentaire('" + photoId + "')\">" + (nouvelle ? "✓ OK" : "Enregistrer") + "</button>" +
+    (nouvelle ? "<button class='btn' onclick=\"enregistrerCommentaire('" + photoId + "', true)\">📷 Photo suivante</button>" : "") +
+    "<button class='btn gris' onclick=\"supprimerPhoto('" + photoId + "')\">🗑 Supprimer la photo</button>";
+  $("modal").style.display = "flex";
+}
+function enregistrerCommentaire(photoId, encore) {
+  const e = etat(dossierId); const p = e.photos.find((x) => x.id === photoId);
+  if (p) { p.commentaire = $("m-com").value.trim(); sauverEtat(dossierId, e); }
+  fermerModal(); rendreDossier();
+  if (encore) prendrePhoto(photoCatEnCours, photoPointEnCours);
+}
+async function supprimerPhoto(photoId) {
+  if (!confirm("Supprimer cette photo ?")) return;
+  const e = etat(dossierId); const p = e.photos.find((x) => x.id === photoId);
+  e.photos = e.photos.filter((x) => x.id !== photoId); sauverEtat(dossierId, e);
+  const d = DATA.interventions.find((x) => x.id === dossierId);
+  if (p && !p.envoye) await fileRetirer(dossierPath(d) + "/PHOTOS/" + p.fichier);
+  else if (p && !DEMO) { try { const dr = await trouverDrive(); await graph("/drives/" + dr + "/root:/" + encChemin(dossierPath(d) + "/PHOTOS/" + p.fichier), { method: "DELETE" }); } catch (err) { console.warn(err); } }
+  fermerModal(); majFile(); rendreDossier();
+}
+function fermerModal() { $("modal").style.display = "none"; }
+
+/* ---------- navigation ---------- */
+function titre(t, s, retourVisible) {
+  $("h-titre").innerHTML = esc(t) + (s ? "<div class='s'>" + esc(s) + "</div>" : "");
+  $("h-retour").style.display = retourVisible ? "" : "none";
+}
+function retour() {
+  if (vueCourante === "dossier") { vueCourante = "liste"; rendre(); }
+  else if (vueCourante === "liste") { vueCourante = "nom"; rendre(); }
+}
+window.addEventListener("popstate", () => { if (vueCourante === "dossier") { vueCourante = "liste"; rendre(); } });
+function afficherErreur(html) { $("vue").innerHTML = "<div class='carte'><div class='alerte r'>" + html + "</div><button class='btn' onclick='location.reload()'>Réessayer</button></div>"; }
+
+function rendre() {
+  $("onglets").style.display = vueCourante === "dossier" ? "flex" : "none";
+  if (vueCourante === "connexion") return rendreConnexion();
+  if (vueCourante === "nom") return rendreNom();
+  if (vueCourante === "liste") return rendreListe();
+  if (vueCourante === "dossier") return rendreDossier();
+}
+function rendreConnexion() {
+  titre("Recherche de fuite", "MESSENT", false);
+  $("vue").innerHTML = "<div class='carte centre'><div style='font-size:54px'>💧</div><h2>Recherche de fuite</h2><p class='mini'>Connecte-toi une seule fois avec ton compte Microsoft MESSENT (le même que pour le SharePoint).</p><button class='btn' onclick='connexion()'>Se connecter</button></div>";
+}
+function rendreNom() {
+  titre("Qui es-tu ?", "Choisis ton nom", false);
+  const t = (DATA && DATA.techniciens) || [];
+  $("vue").innerHTML = "<div class='carte'><h2>👷 Choisis ton nom</h2>" + (t.length ? t.map((n) => "<button class='nom' onclick=\"choisirNom('" + esc(n).replace(/'/g, "\\'") + "')\">" + esc(n) + "</button>").join("") : "<div class='alerte'>Aucun technicien enregistré : le bureau doit les ajouter dans l'appli (⚙️ Paramètres).</div>") + "</div>" +
+    (compte ? "<div class='mini centre'>Connecté : " + esc(compte.username) + "</div>" : "");
+}
+function choisirNom(n) { MOI = n; localStorage.setItem("rdf_moi", n); vueCourante = "liste"; rendre(); majFile(); }
+async function actualiser() { toast("Mise à jour…", 1500); await chargerDonnees(); rendre(); traiterFile(); }
+function rendreListe() {
+  titre(MOI, "Mes recherches de fuite", true);
+  const l = mesDossiers();
+  let h = "<button class='btn gris pt' onclick='actualiser()'>🔄 Actualiser</button><button class='btn gris pt' onclick=\"vueCourante='nom';rendre()\">👤 Changer de nom</button>";
+  if (!l.length) h += "<div class='carte centre'><div style='font-size:44px'>✅</div><p>Aucune recherche de fuite programmée pour toi.</p></div>";
+  l.forEach((d) => {
+    const e = etat(d.id), n = e.photos.length, fini = e.etat === "terminee";
+    const auj = d.datePrevue === today(), passe = d.datePrevue && d.datePrevue < today();
+    h += "<a class='dossier" + (d.urgence ? " urg" : "") + "' onclick=\"ouvrirDossier('" + d.id + "')\">" +
+      "<div class='d'>" + (d.datePrevue ? (auj ? "AUJOURD'HUI" : jour(d.datePrevue) + " " + fmtDate(d.datePrevue)) + (d.heure ? " · " + esc(d.heure) : "") : "Date à définir") + (d.sa ? " · SA " + esc(d.sa) : "") + "</div>" +
+      "<div class='c'>" + esc(d.ailleurs && d.chantier ? d.chantier : d.client) + "</div>" +
+      "<div class='mini'>📍 " + esc(lieu(d)) + (complement(d) ? " — " + esc(complement(d)) : "") + "</div>" + (d.occupant ? "<div class='mini'>🏠 " + esc(d.occupant) + "</div>" : "") +
+      (d.urgence ? "<span class='badge r'>URGENT</span>" : "") + (d.revetement && d.revetement !== "Inconnu" ? "<span class='badge'>" + esc(d.revetement) + "</span>" : "") +
+      (fini ? "<span class='badge v'>✅ terminée</span>" : n ? "<span class='badge o'>⏳ commencée · " + n + " 📷</span>" : (passe ? "<span class='badge r'>en retard</span>" : "")) +
+      "</a>";
+  });
+  $("vue").innerHTML = h;
+}
+function ouvrirDossier(id) { dossierId = id; ongletDossier = "infos"; vueCourante = "dossier"; history.pushState({}, ""); rendre(); window.scrollTo(0, 0); }
+function choisirOnglet(o) { ongletDossier = o; rendreDossier(); window.scrollTo(0, 0); }
+
+function rendreDossier() {
+  const d = DATA.interventions.find((x) => x.id === dossierId); if (!d) { vueCourante = "liste"; return rendre(); }
+  const e = etat(d.id);
+  titre(d.ailleurs && d.chantier ? d.chantier : d.client, (d.sa ? "SA " + d.sa + " · " : "") + (d.datePrevue ? fmtDate(d.datePrevue) : ""), true);
+  const ong = [["infos", "📋", "Infos"], ["qcm", "✅", "Questions"], ["photos", "📷", "Photos"], ["fin", "🏁", "Terminer"]];
+  $("onglets").innerHTML = ong.map((o) => "<button class='" + (ongletDossier === o[0] ? "actif" : "") + "' onclick=\"choisirOnglet('" + o[0] + "')\"><b>" + o[1] + "</b>" + o[2] + (o[0] === "photos" && e.photos.length ? " (" + e.photos.length + ")" : "") + "</button>").join("");
+  if (ongletDossier === "infos") $("vue").innerHTML = htmlInfos(d);
+  else if (ongletDossier === "qcm") $("vue").innerHTML = htmlQcm(d, e);
+  else if (ongletDossier === "photos") { $("vue").innerHTML = htmlPhotos(d, e); chargerApercus(e); }
+  else $("vue").innerHTML = htmlFin(d, e);
+}
+function ligne(l, v) { return v ? "<div class='info'><div class='l'>" + l + "</div><div class='v'>" + v + "</div></div>" : ""; }
+const tel = (t) => t ? "<a class='lien' href='tel:" + esc(t.replace(/[^\d+]/g, "")) + "'>📞 " + esc(t) + "</a>" : "";
+function htmlInfos(d) {
+  const adr = lieu(d) || "";
+  const maps = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(adr);
+  const waze = "https://waze.com/ul?q=" + encodeURIComponent(adr) + "&navigate=yes";
+  let h = "";
+  if (!dossierPath(d)) h += "<div class='alerte r'>⚠ Le bureau n'a pas encore créé le dossier SharePoint : les photos ne pourront pas être envoyées.</div>";
+  h += "<div class='carte'><h2>📍 Lieu</h2><div style='font-size:18px;font-weight:700'>" + esc(d.ailleurs && d.chantier ? d.chantier : d.client) + "</div><div style='margin:4px 0 4px'>" + esc(adr) + "</div>" + (complement(d) ? "<div style='font-weight:700;color:#2b57a0;margin-bottom:10px'>🏢 " + esc(complement(d)) + "</div>" : "<div style='height:6px'></div>") +
+    "<a class='btn pt' href='" + waze + "' target='_blank'>🚗 Waze</a><a class='btn pt gris' href='" + maps + "' target='_blank'>🗺️ Google Maps</a>" +
+    ligne("Accès / clés / codes", esc(d.accesInfo)) + ligne("Accès toiture", esc(d.acces)) + "</div>";
+  h += "<div class='carte'><h2>👤 Contacts</h2>" + ligne("Rendez-vous sur place", esc(d.contactSite) + (d.telSite ? "<br>" + tel(d.telSite) : "")) +
+    ligne("Occupant (subit la fuite)", d.occupant ? esc(d.occupant) + (d.qualite ? " <span class='mini'>(" + esc(d.qualite) + ")</span>" : "") + (d.telOcc ? "<br>" + tel(d.telOcc) : "") : "") +
+    ligne("Propriétaire", esc(d.proprio)) + ligne("Conseil syndical", esc(d.cs)) +
+    ligne(d.ailleurs ? "Donneur d'ordre" : "Client", esc(d.client) + (d.typeClient ? " <span class='mini'>(" + esc(d.typeClient) + ")</span>" : "") + (d.contact ? "<br>" + esc(d.contact) : "") + (d.tel ? "<br>" + tel(d.tel) : "")) +
+    ligne("Réf. client / OS", esc(d.refClient)) + "</div>";
+  h += "<div class='carte'><h2>💧 La fuite</h2><div style='white-space:pre-wrap;font-size:17px'>" + esc(d.description || "—") + "</div>" +
+    ligne("Revêtement", esc(d.revetement)) + ligne("Protection", esc(d.protection)) + ligne("Usage", esc(d.usage)) + ligne("Surface", d.surface ? esc(d.surface) + " m²" : "") + ligne("Hauteur", esc(d.niveaux)) + "</div>";
+  h += "<div class='carte'><h2>🗓️ Intervention</h2>" + ligne("Date", d.datePrevue ? jour(d.datePrevue) + " " + fmtDate(d.datePrevue) + " " + esc(d.heure || "") : "à définir") + ligne("Technicien(s)", esc(d.tech) + (d.tech2 ? " + " + esc(d.tech2) : "")) + ligne("N° SA", esc(d.sa)) + "</div>";
+  h += "<button class='btn vert' onclick=\"choisirOnglet('qcm')\">Commencer le questionnaire ›</button>";
+  return h;
+}
+function progression(e) {
+  let n = 0, t = 0;
+  QCM.forEach((s) => s.q.forEach((q) => { if (s.ctrl || q.t === "un" || q.t === "plusieurs") { t++; const v = e.reponses[q.id]; if (v && (!Array.isArray(v) || v.length)) n++; } }));
+  return { n, t };
+}
+function htmlQcm(d, e) {
+  const p = progression(e);
+  let h = "<div class='carte'><div class='mini'>" + p.n + " / " + p.t + " questions remplies — tout est enregistré automatiquement</div><div class='prog'><div style='width:" + Math.round(100 * p.n / p.t) + "%'></div></div></div>";
+  QCM.forEach((sec, si) => {
+    h += "<div class='carte'><h2>" + (si + 1) + ". " + esc(sec.s) + "</h2>";
+    if (sec.ctrl) h += "<div class='mini' style='margin:-6px 0 12px'>Pour chaque point : Bon / Défaut / Non vu. En cas de défaut, prends une photo 📷 et note ce que tu vois.</div>";
+    sec.q.forEach((q) => { h += sec.ctrl ? htmlCtrl(q, e) : htmlQuestion(q, e); });
+    h += "</div>";
+  });
+  h += "<button class='btn' onclick=\"choisirOnglet('photos')\">Aller aux photos ›</button>";
+  return h;
+}
+function htmlQuestion(q, e) {
+  const v = e.reponses[q.id];
+  let h = "<div class='q'><div class='lbl'>" + esc(q.l) + "</div>";
+  if (q.t === "un" || q.t === "plusieurs") {
+    h += "<div class='chips'>" + q.o.map((o, i) => {
+      const sel = q.t === "un" ? v === o : Array.isArray(v) && v.indexOf(o) >= 0;
+      return "<button class='chip" + (sel ? " sel" : "") + "' onclick=\"repondre('" + q.id + "'," + i + ")\">" + esc(o) + "</button>";
+    }).join("") + "</div>";
+    if (q.t === "plusieurs") h += "<div class='mini' style='margin-top:4px'>plusieurs réponses possibles</div>";
+  } else if (q.t === "nombre") {
+    h += "<input type='number' inputmode='decimal' value='" + esc(v || "") + "' onchange=\"saisir('" + q.id + "',this.value)\">";
+  } else {
+    h += "<textarea placeholder='" + esc(q.ph || "") + "' onchange=\"saisir('" + q.id + "',this.value)\">" + esc(v || "") + "</textarea>";
+  }
+  return h + "</div>";
+}
+function htmlCtrl(q, e) {
+  const v = e.reponses[q.id] || "", n = e.notes[q.id] || "";
+  const nb = e.photos.filter((p) => p.point === q.l).length;
+  const cls = { "Bon": "ok", "Défaut": "def", "Non vu": "nv", "Sans objet": "na" };
+  return "<div class='ctrl" + (v === "Défaut" ? " defaut" : v === "Bon" ? " okk" : "") + "'><div class='lbl'>" + esc(q.l) + "</div><div class='aide'>" + esc(q.a) + "</div><div class='chips'>" +
+    CTRL.map((c) => "<button class='chip " + cls[c] + (v === c ? " sel" : "") + "' onclick=\"controler('" + q.id + "','" + c + "')\">" + (c === "Bon" ? "✔ " : c === "Défaut" ? "⚠ " : "") + c + "</button>").join("") +
+    "<button class='chip' onclick=\"prendrePhoto('DEFAUT','" + esc(q.l).replace(/'/g, "\\'") + "')\">📷" + (nb ? " " + nb : "") + "</button></div>" +
+    (v === "Défaut" ? "<textarea style='margin-top:8px;min-height:60px' placeholder='Ce que tu vois (où, combien, taille…)' onchange=\"noter('" + q.id + "',this.value)\">" + esc(n) + "</textarea>" : "") + "</div>";
+}
+function trouverQ(id) { for (const s of QCM) for (const q of s.q) if (q.id === id) return q; return null; }
+function repondre(id, i) {
+  const q = trouverQ(id), e = etat(dossierId), o = q.o[i];
+  if (!e.debut) e.debut = nowISO();
+  if (q.t === "un") e.reponses[id] = e.reponses[id] === o ? "" : o;
+  else { const a = Array.isArray(e.reponses[id]) ? e.reponses[id] : []; const k = a.indexOf(o); if (k >= 0) a.splice(k, 1); else a.push(o); e.reponses[id] = a; }
+  sauverEtat(dossierId, e); garderScroll(rendreDossier);
+}
+function saisir(id, v) { const e = etat(dossierId); if (!e.debut) e.debut = nowISO(); e.reponses[id] = v.trim(); sauverEtat(dossierId, e); }
+function controler(id, v) { const e = etat(dossierId); if (!e.debut) e.debut = nowISO(); e.reponses[id] = e.reponses[id] === v ? "" : v; sauverEtat(dossierId, e); garderScroll(rendreDossier); }
+function noter(id, v) { const e = etat(dossierId); e.notes[id] = v.trim(); sauverEtat(dossierId, e); }
+function garderScroll(fn) { const y = window.scrollY; fn(); window.scrollTo(0, y); }
+
+function htmlPhotos(d, e) {
+  let h = "<div class='carte'><h2>📷 Prendre une photo</h2><div class='mini' style='margin:-6px 0 12px'>Choisis d'abord ce que tu photographies : la photo est rangée toute seule.</div><div class='camgrid'>";
+  PHOTO_CATS.forEach((c) => {
+    const n = e.photos.filter((p) => p.categorie === c.l).length;
+    h += "<button class='cam' onclick=\"prendrePhoto('" + c.k + "')\"><b>" + c.ic + "</b>" + esc(c.l) + (n ? "<br><span class='n'>" + n + "</span>" : "") + "</button>";
+  });
+  h += "</div><button class='btn gris' style='margin-top:12px' onclick=\"depuisGalerie('AUTRE')\">🖼️ Ajouter depuis la galerie</button></div>";
+  if (e.photos.length) {
+    const nonEnv = e.photos.filter((p) => !p.envoye).length;
+    h += "<div class='carte'><h2>Photos du dossier (" + e.photos.length + ")</h2><div class='mini'>" + (nonEnv ? "⏳ " + nonEnv + " en cours d'envoi" : "✓ toutes envoyées sur le SharePoint") + " — touche une photo pour ajouter un commentaire</div><div class='vgrid'>";
+    e.photos.slice().reverse().forEach((p) => {
+      h += "<div class='vg' onclick=\"ouvrirPhoto('" + p.id.replace(/'/g, "\\'") + "')\"><img data-ap='" + esc(p.id) + "'><span class='e'>" + (p.envoye ? "✓" : "⏳") + (p.commentaire ? " 💬" : "") + "</span><div class='k'>" + esc(p.categorie) + "</div></div>";
+    });
+    h += "</div></div>";
+  }
+  return h;
+}
+async function chargerApercus() {
+  for (const img of document.querySelectorAll("img[data-ap]")) {
+    const a = await apercuGet(img.getAttribute("data-ap")); if (a) img.src = URL.createObjectURL(a.blob);
+  }
+}
+function htmlFin(d, e) {
+  const p = progression(e), manque = [];
+  if (e.photos.length < 4) manque.push("au moins 4 photos (" + e.photos.length + " prise(s))");
+  if (!e.reponses.trouvee) manque.push("la question « Fuite trouvée ? »");
+  if (!e.photos.some((x) => x.categorie === "Vue d'ensemble toiture")) manque.push("une vue d'ensemble de la toiture");
+  const nbCtrl = QCM.find((s) => s.ctrl).q.filter((q) => e.reponses[q.id]).length;
+  if (nbCtrl < 5) manque.push("les points de contrôle (" + nbCtrl + " remplis)");
+  let h = "<div class='carte'><h2>🏁 Fin d'intervention</h2>" +
+    ligne("Questions", p.n + " / " + p.t) + ligne("Photos", String(e.photos.length)) + ligne("Défauts relevés", String(QCM.find((s) => s.ctrl).q.filter((q) => e.reponses[q.id] === "Défaut").length)) +
+    ligne("Début", e.debut ? e.debut.replace("T", " à ").substring(0, 18) : "") + ligne("Fin", e.fin ? e.fin.replace("T", " à ").substring(0, 18) : "") + "</div>";
+  if (manque.length && e.etat !== "terminee") h += "<div class='alerte'>Pour un bon rapport, il manque :<br>• " + manque.join("<br>• ") + "</div>";
+  if (e.etat === "terminee") {
+    h += "<div class='alerte' style='background:#e4f4e9;color:#1a7a3c'>✅ Intervention marquée terminée. Le bureau a reçu le questionnaire et les photos" + "" + ".</div>" +
+      "<button class='btn gris' onclick='rouvrir()'>↩ Rouvrir pour compléter</button>";
+  } else {
+    h += "<button class='btn vert' onclick='terminer()'>✅ J'ai terminé l'intervention</button><div class='mini centre'>Le bureau est prévenu et le rapport pourra être rédigé.</div>";
+  }
+  return h;
+}
+function terminer() {
+  if (!confirm("Marquer l'intervention comme terminée ?")) return;
+  const e = etat(dossierId); e.etat = "terminee"; e.fin = nowISO(); if (!e.debut) e.debut = e.fin;
+  localStorage.setItem(cleEtat(dossierId), JSON.stringify(e)); mettreFicheEnFile(dossierId);
+  toast("Merci ! Envoi au bureau…", 3000); rendreDossier();
+}
+function rouvrir() { const e = etat(dossierId); e.etat = "en_cours"; e.fin = ""; sauverEtat(dossierId, e); rendreDossier(); }
+
+/* ---------- démarrage ---------- */
+(async function demarrer() {
+  if (DEMO) $("demo-band").style.display = "block";
+  if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+  try { await ouvrirDB(); } catch (e) { afficherErreur("Stockage du téléphone indisponible."); return; }
+  const ok = await initAuth();
+  if (!DEMO && !ok) { if (msalApp) { vueCourante = "connexion"; rendre(); } return; }
+  if (!(await chargerDonnees())) return;
+  if (MOI && DATA.techniciens.indexOf(MOI) < 0) MOI = "";
+  vueCourante = MOI ? "liste" : "nom";
+  rendre(); majFile(); traiterFile();
+})();
+</script>
+</body>
+</html>
