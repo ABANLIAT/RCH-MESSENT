@@ -1,5 +1,5 @@
 /* Garde l'appli disponible sans réseau (sur le toit). Réseau d'abord, cache en secours. */
-const CACHE = "rdf-v1";
+const CACHE = "rdf-v3";
 const FICHIERS = ["./", "./index.html", "./config.js", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FICHIERS)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", (e) => { e.waitUntil(caches.keys().then((k) => Promise.all(k.filter((x) => x !== CACHE).map((x) => caches.delete(x)))).then(() => self.clients.claim())); });

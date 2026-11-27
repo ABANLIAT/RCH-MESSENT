@@ -76,6 +76,27 @@
   .alerte{background:#fff4dc;color:#8a5a00;border-radius:10px;padding:12px;font-size:15px;margin-bottom:12px}
   .alerte.r{background:#fbe9e7;color:var(--rouge)}
   .centre{text-align:center}
+  .gros{display:block;width:100%;background:linear-gradient(135deg,#d9480f,#b3261e);color:#fff;border:none;border-radius:18px;padding:20px 16px;font-size:21px;font-weight:800;margin:4px 0 16px;box-shadow:0 6px 16px rgba(179,38,30,.3);text-align:left}
+  .gros small{display:block;font-size:14px;font-weight:600;opacity:.9;margin-top:3px}
+  .etapes-nd{display:flex;gap:6px;margin:2px 0 14px}
+  .etapes-nd div{flex:1;height:7px;border-radius:5px;background:#d7dce4}
+  .etapes-nd div.ok{background:var(--vert)}.etapes-nd div.cur{background:var(--bleu)}
+  .q-titre{font-size:24px;font-weight:800;color:var(--navy);margin:6px 0 4px}
+  .q-sous{color:var(--gris);font-size:15px;margin-bottom:16px}
+  .choix{display:flex;align-items:center;gap:14px;width:100%;background:#fff;border:3px solid var(--bord);border-radius:16px;padding:16px;margin-bottom:12px;font-size:19px;font-weight:700;color:var(--txt);text-align:left}
+  .choix b{font-size:38px;line-height:1}
+  .choix.sel{border-color:var(--bleu);background:#eef3fb}
+  .champ{margin-bottom:14px}
+  .champ label{display:block;font-weight:700;margin-bottom:6px}
+  .champ .opt{font-weight:400;color:var(--gris);font-size:13px}
+  .urgent{display:flex;align-items:center;gap:12px;width:100%;border:3px solid var(--bord);background:#fff;border-radius:16px;padding:14px 16px;font-size:19px;font-weight:800;color:var(--txt);margin:6px 0 14px}
+  .urgent.sel{border-color:var(--rouge);background:#fff1ef;color:var(--rouge)}
+  .nav-nd{display:flex;gap:10px;margin-top:8px}
+  .nav-nd .btn{margin:0}
+  .fete{text-align:center;padding:26px 10px}
+  .fete .e{font-size:78px;animation:saut 1s ease-in-out infinite alternate}
+  @keyframes saut{from{transform:translateY(0) rotate(-6deg)}to{transform:translateY(-14px) rotate(6deg)}}
+  .attente{background:#fff;border:1px dashed var(--or);border-radius:12px;padding:12px;margin-bottom:10px}
   .demo{background:#c9a227;color:#fff;text-align:center;font-size:13px;font-weight:700;padding:4px}
 </style>
 </head>
@@ -209,7 +230,14 @@ function ouvrirDB() {
     r.onerror = () => ko(r.error);
   });
 }
+const MEM = { file: new Map(), apercus: new Map() };   // secours si IndexedDB indisponible (démo ouverte en fichier)
+function idbMem(store, fn) {
+  const m = MEM[store], k = store === "file" ? "path" : "id";
+  const st = { put: (o) => { m.set(o[k], o); return {}; }, getAll: () => ({ result: Array.from(m.values()) }), delete: (x) => { m.delete(x); return {}; }, get: (x) => ({ result: m.get(x) }) };
+  const r = fn(st); return Promise.resolve(r && r.result);
+}
 function idb(store, mode, fn) {
+  if (!db) return idbMem(store, fn);
   return new Promise((ok, ko) => { const tx = db.transaction(store, mode); const st = tx.objectStore(store); const r = fn(st); tx.oncomplete = () => ok(r && r.result); tx.onerror = () => ko(tx.error); });
 }
 const fileAjouter = (item) => idb("file", "readwrite", (s) => s.put(item));
@@ -278,8 +306,8 @@ async function ecrireFichier(path, blob, type) {
 /* ---------- données du bureau ---------- */
 function demoData() {
   return { techniciens: ["Kévin MARTIN", "Lucas BERNARD", "Thomas PETIT"], interventions: [
-    { id: "d1", sa: "7326012", date: today(), client: "SDC RÉSIDENCE LES TILLEULS", typeClient: "Agence / syndic", contact: "Mme Durand (Foncia)", tel: "05 49 00 00 00", mail: "", adresse: "12 rue Carnot 86000 POITIERS", ailleurs: true, chantier: "Résidence Les Tilleuls", adChantier: "4 allée des Tilleuls 86180 BUXEROLLES", batiment: "Bât. B", etage: "4e (dernier)", appart: "42", occupant: "Mme Dupont", qualite: "Locataire", telOcc: "06 22 33 44 55", refClient: "OS 2026-145", contactSite: "M. Morel (gardien)", telSite: "06 00 00 00 00", accesInfo: "Clés chez le gardien, trappe au 4e", revetement: "Bitume (SBS / APP)", protection: "Gravillons", usage: "Inaccessible (sauf entretien)", acces: "Trappe / escalier intérieur", surface: "420", niveaux: "R+4", description: "Infiltration au plafond de la chambre du T3 au 4e étage, côté nord, à chaque forte pluie depuis 2 mois.", tech: "Kévin MARTIN", datePrevue: today(), heure: "8h30", urgence: true, programme: true, dossier: "SP:CHANTIERS\\2026\\RECHERCHE DE FUITE\\7326012 - RESIDENCE LES TILLEULS" },
-    { id: "d2", sa: "7326013", date: today(), client: "M. et Mme LEROY", tel: "06 11 22 33 44", adresse: "8 impasse des Lilas 86280 SAINT-BENOIT", revetement: "PVC", protection: "Aucune (membrane apparente)", acces: "Échelle nécessaire", surface: "35", description: "Tache au plafond du séjour sous la terrasse.", tech: "Kévin MARTIN", datePrevue: "2026-11-24", heure: "14h", programme: true, dossier: "SP:CHANTIERS\\2026\\RECHERCHE DE FUITE\\7326013 - LEROY" }
+    { id: "d1", sa: "7326012", date: today(), client: "SDC RÉSIDENCE LES TILLEULS", typeClient: "Agence / syndic", contact: "Mme Durand (Foncia)", tel: "05 49 00 00 00", mail: "", adresse: "12 rue Carnot 86000 POITIERS", ailleurs: true, chantier: "Résidence Les Tilleuls", adChantier: "4 allée des Tilleuls 86180 BUXEROLLES", batiment: "Bât. B", etage: "4e (dernier)", appart: "42", occupant: "Mme Dupont", qualite: "Locataire", telOcc: "06 22 33 44 55", refClient: "OS 2026-145", contactSite: "M. Morel (gardien)", telSite: "06 00 00 00 00", accesInfo: "Clés chez le gardien, trappe au 4e", revetement: "Bitume (SBS / APP)", protection: "Gravillons", usage: "Inaccessible (sauf entretien)", acces: "Trappe / escalier intérieur", surface: "420", niveaux: "R+4", description: "Infiltration au plafond de la chambre du T3 au 4e étage, côté nord, à chaque forte pluie depuis 2 mois.", tech: "Kévin MARTIN", datePrevue: today(), heure: "8h30", urgence: true, programme: true, dossier: "SP:MESSENT ASSISTANCE\\2026\\RECHERCHE DE FUITE\\AGENCES\\FONCIA\\7326012 - RESIDENCE LES TILLEULS" },
+    { id: "d2", sa: "7326013", date: today(), client: "M. et Mme LEROY", tel: "06 11 22 33 44", adresse: "8 impasse des Lilas 86280 SAINT-BENOIT", revetement: "PVC", protection: "Aucune (membrane apparente)", acces: "Échelle nécessaire", surface: "35", description: "Tache au plafond du séjour sous la terrasse.", tech: "Kévin MARTIN", datePrevue: "2026-11-24", heure: "14h", programme: true, dossier: "SP:MESSENT ASSISTANCE\\2026\\RECHERCHE DE FUITE\\PARTICULIERS\\7326013 - LEROY" }
   ]};
 }
 async function chargerDonnees(silencieux) {
@@ -287,6 +315,7 @@ async function chargerDonnees(silencieux) {
   try {
     const r = await lireFichier(CFG.dataPath);
     DATA = await r.json();
+    nettoyerDemandesLocales();
     localStorage.setItem("rdf_data", JSON.stringify(DATA));
     localStorage.setItem("rdf_data_date", nowISO());
     return true;
@@ -297,7 +326,13 @@ async function chargerDonnees(silencieux) {
     return false;
   }
 }
-const mesDossiers = () => (DATA ? DATA.interventions : []).filter((d) => (d.tech === MOI || d.tech2 === MOI) && !d.facture && !d.rapport && d.programme)
+/* ---------- demandes créées sur ce téléphone (en attente d'intégration par le bureau) ---------- */
+const demandesLocales = () => { try { return JSON.parse(localStorage.getItem("rdf_mes_demandes") || "[]"); } catch (e) { return []; } };
+const sauverDemandesLocales = (a) => localStorage.setItem("rdf_mes_demandes", JSON.stringify(a));
+function nettoyerDemandesLocales() { if (!DATA) return; const ids = {}; DATA.interventions.forEach((d) => ids[d.id] = 1); sauverDemandesLocales(demandesLocales().filter((d) => !ids[d.id])); }
+function toutesInterventions() { const a = (DATA ? DATA.interventions : []).slice(), ids = {}; a.forEach((d) => ids[d.id] = 1); demandesLocales().forEach((d) => { if (!ids[d.id]) a.push(d); }); return a; }
+function trouverInter(id) { return toutesInterventions().find((x) => x.id === id); }
+const mesDossiers = () => toutesInterventions().filter((d) => (d.tech === MOI || d.tech2 === MOI) && !d.facture && !d.rapport && d.programme)
   .sort((a, b) => (a.datePrevue || "9") < (b.datePrevue || "9") ? -1 : 1);
 const dossierPath = (d) => d.dossier && d.dossier.indexOf("SP:") === 0 ? d.dossier.substring(3).replace(/\\/g, "/") : "";
 const lieu = (d) => d.ailleurs ? (d.adChantier || d.adresse) : d.adresse;
@@ -332,7 +367,7 @@ function planifierEnvoiFiche(id) {
   envoisFiche[id] = setTimeout(() => mettreFicheEnFile(id), 2500);
 }
 async function mettreFicheEnFile(id) {
-  const d = DATA.interventions.find((x) => x.id === id); if (!d) return;
+  const d = trouverInter(id); if (!d) return;
   const base = dossierPath(d); if (!base) return;
   const e = etat(id);
   const fiche = { app: "RDF-MESSENT", version: 1, interventionId: id, sa: d.sa || "", client: d.client, technicien: MOI, etat: e.etat || "en_cours",
@@ -357,7 +392,7 @@ async function traiterFile() {
   if (envoiEnCours) return; envoiEnCours = true;
   try {
     let l = await fileListe();
-    l.sort((a, b) => (a.genre === "fiche") - (b.genre === "fiche") || a.ajout - b.ajout);   // photos d'abord, fiche ensuite
+    l.sort((a, b) => (b.genre === "demande") - (a.genre === "demande") || (a.genre === "fiche") - (b.genre === "fiche") || a.ajout - b.ajout);   // photos d'abord, fiche ensuite
     for (const it of l) {
       if (!navigator.onLine && !DEMO) break;
       try {
@@ -402,7 +437,7 @@ async function reduire(file) {
 }
 async function traiterPhotos(files, demanderComment) {
   if (!files || !files.length) return;
-  const d = DATA.interventions.find((x) => x.id === dossierId); const base = dossierPath(d);
+  const d = trouverInter(dossierId); const base = dossierPath(d);
   if (!base) { toast("Ce dossier n'a pas encore de dossier SharePoint : préviens le bureau.", 5000); return; }
   const e = etat(dossierId);
   if (!e.debut) e.debut = nowISO();
@@ -446,7 +481,7 @@ async function supprimerPhoto(photoId) {
   if (!confirm("Supprimer cette photo ?")) return;
   const e = etat(dossierId); const p = e.photos.find((x) => x.id === photoId);
   e.photos = e.photos.filter((x) => x.id !== photoId); sauverEtat(dossierId, e);
-  const d = DATA.interventions.find((x) => x.id === dossierId);
+  const d = trouverInter(dossierId);
   if (p && !p.envoye) await fileRetirer(dossierPath(d) + "/PHOTOS/" + p.fichier);
   else if (p && !DEMO) { try { const dr = await trouverDrive(); await graph("/drives/" + dr + "/root:/" + encChemin(dossierPath(d) + "/PHOTOS/" + p.fichier), { method: "DELETE" }); } catch (err) { console.warn(err); } }
   fermerModal(); majFile(); rendreDossier();
@@ -459,10 +494,11 @@ function titre(t, s, retourVisible) {
   $("h-retour").style.display = retourVisible ? "" : "none";
 }
 function retour() {
+  if (vueCourante === "nouvelle") { if (ND.etape > 1 && ND.etape < 6) { ND.etape--; rendre(); } else { vueCourante = "liste"; rendre(); } return; }
   if (vueCourante === "dossier") { vueCourante = "liste"; rendre(); }
   else if (vueCourante === "liste") { vueCourante = "nom"; rendre(); }
 }
-window.addEventListener("popstate", () => { if (vueCourante === "dossier") { vueCourante = "liste"; rendre(); } });
+window.addEventListener("popstate", () => { if (vueCourante === "dossier" || vueCourante === "nouvelle") { vueCourante = "liste"; rendre(); } });
 function afficherErreur(html) { $("vue").innerHTML = "<div class='carte'><div class='alerte r'>" + html + "</div><button class='btn' onclick='location.reload()'>Réessayer</button></div>"; }
 
 function rendre() {
@@ -471,6 +507,7 @@ function rendre() {
   if (vueCourante === "nom") return rendreNom();
   if (vueCourante === "liste") return rendreListe();
   if (vueCourante === "dossier") return rendreDossier();
+  if (vueCourante === "nouvelle") return rendreNouvelle();
 }
 function rendreConnexion() {
   titre("Recherche de fuite", "MESSENT", false);
@@ -487,7 +524,10 @@ async function actualiser() { toast("Mise à jour…", 1500); await chargerDonne
 function rendreListe() {
   titre(MOI, "Mes recherches de fuite", true);
   const l = mesDossiers();
-  let h = "<button class='btn gris pt' onclick='actualiser()'>🔄 Actualiser</button><button class='btn gris pt' onclick=\"vueCourante='nom';rendre()\">👤 Changer de nom</button>";
+  let h = "<button class='gros' onclick='nouvelleDemande()'>🚨 Nouvelle recherche de fuite<small>Une urgence ? Crée la demande toi-même en 1 minute</small></button>" +
+    "<button class='btn gris pt' onclick='actualiser()'>🔄 Actualiser</button><button class='btn gris pt' onclick=\"vueCourante='nom';rendre()\">👤 Changer de nom</button>";
+  const env = demandesLocales().filter((d) => d.creePar === MOI && !d.tech);
+  if (env.length) h += "<h3>📨 Envoyées au bureau</h3>" + env.map((d) => "<div class='attente'><b>" + esc(d.ailleurs && d.chantier ? d.chantier : d.client) + "</b><div class='mini'>📍 " + esc(lieu(d)) + " · le " + fmtDate(d.date) + "</div><div class='mini'>⏳ le bureau va la programmer</div></div>").join("");
   if (!l.length) h += "<div class='carte centre'><div style='font-size:44px'>✅</div><p>Aucune recherche de fuite programmée pour toi.</p></div>";
   l.forEach((d) => {
     const e = etat(d.id), n = e.photos.length, fini = e.etat === "terminee";
@@ -496,7 +536,7 @@ function rendreListe() {
       "<div class='d'>" + (d.datePrevue ? (auj ? "AUJOURD'HUI" : jour(d.datePrevue) + " " + fmtDate(d.datePrevue)) + (d.heure ? " · " + esc(d.heure) : "") : "Date à définir") + (d.sa ? " · SA " + esc(d.sa) : "") + "</div>" +
       "<div class='c'>" + esc(d.ailleurs && d.chantier ? d.chantier : d.client) + "</div>" +
       "<div class='mini'>📍 " + esc(lieu(d)) + (complement(d) ? " — " + esc(complement(d)) : "") + "</div>" + (d.occupant ? "<div class='mini'>🏠 " + esc(d.occupant) + "</div>" : "") +
-      (d.urgence ? "<span class='badge r'>URGENT</span>" : "") + (d.revetement && d.revetement !== "Inconnu" ? "<span class='badge'>" + esc(d.revetement) + "</span>" : "") +
+      (d.urgence ? "<span class='badge r'>URGENT</span>" : "") + (d.depuisTel && d.aCompleter !== false ? "<span class='badge o'>📱 créée sur place</span>" : "") + (d.revetement && d.revetement !== "Inconnu" ? "<span class='badge'>" + esc(d.revetement) + "</span>" : "") +
       (fini ? "<span class='badge v'>✅ terminée</span>" : n ? "<span class='badge o'>⏳ commencée · " + n + " 📷</span>" : (passe ? "<span class='badge r'>en retard</span>" : "")) +
       "</a>";
   });
@@ -506,7 +546,7 @@ function ouvrirDossier(id) { dossierId = id; ongletDossier = "infos"; vueCourant
 function choisirOnglet(o) { ongletDossier = o; rendreDossier(); window.scrollTo(0, 0); }
 
 function rendreDossier() {
-  const d = DATA.interventions.find((x) => x.id === dossierId); if (!d) { vueCourante = "liste"; return rendre(); }
+  const d = trouverInter(dossierId); if (!d) { vueCourante = "liste"; return rendre(); }
   const e = etat(d.id);
   titre(d.ailleurs && d.chantier ? d.chantier : d.client, (d.sa ? "SA " + d.sa + " · " : "") + (d.datePrevue ? fmtDate(d.datePrevue) : ""), true);
   const ong = [["infos", "📋", "Infos"], ["qcm", "✅", "Questions"], ["photos", "📷", "Photos"], ["fin", "🏁", "Terminer"]];
@@ -532,7 +572,7 @@ function htmlInfos(d) {
     ligne("Propriétaire", esc(d.proprio)) + ligne("Conseil syndical", esc(d.cs)) +
     ligne(d.ailleurs ? "Donneur d'ordre" : "Client", esc(d.client) + (d.typeClient ? " <span class='mini'>(" + esc(d.typeClient) + ")</span>" : "") + (d.contact ? "<br>" + esc(d.contact) : "") + (d.tel ? "<br>" + tel(d.tel) : "")) +
     ligne("Réf. client / OS", esc(d.refClient)) + "</div>";
-  h += "<div class='carte'><h2>💧 La fuite</h2><div style='white-space:pre-wrap;font-size:17px'>" + esc(d.description || "—") + "</div>" +
+  h += "<div class='carte'><h2>💧 La fuite</h2><div style='white-space:pre-wrap;font-size:17px'>" + esc(d.description || d.note || "—") + "</div>" +
     ligne("Revêtement", esc(d.revetement)) + ligne("Protection", esc(d.protection)) + ligne("Usage", esc(d.usage)) + ligne("Surface", d.surface ? esc(d.surface) + " m²" : "") + ligne("Hauteur", esc(d.niveaux)) + "</div>";
   h += "<div class='carte'><h2>🗓️ Intervention</h2>" + ligne("Date", d.datePrevue ? jour(d.datePrevue) + " " + fmtDate(d.datePrevue) + " " + esc(d.heure || "") : "à définir") + ligne("Technicien(s)", esc(d.tech) + (d.tech2 ? " + " + esc(d.tech2) : "")) + ligne("N° SA", esc(d.sa)) + "</div>";
   h += "<button class='btn vert' onclick=\"choisirOnglet('qcm')\">Commencer le questionnaire ›</button>";
@@ -642,11 +682,120 @@ function terminer() {
 }
 function rouvrir() { const e = etat(dossierId); e.etat = "en_cours"; e.fin = ""; sauverEtat(dossierId, e); rendreDossier(); }
 
+
+/* =====================================================================
+   NOUVELLE DEMANDE DEPUIS LE TÉLÉPHONE (assistant en 5 étapes)
+   ===================================================================== */
+let ND = null;
+const TYPES_ND = [
+  { k: "Particulier", ic: "🏠", l: "Un particulier", s: "maison, appartement…" },
+  { k: "Agence / syndic", ic: "🏢", l: "Une agence / un syndic", s: "immeuble, copropriété…" },
+  { k: "Entreprise", ic: "🏭", l: "Une entreprise / autre", s: "bureaux, commerce, mairie…" }
+];
+const SYMPTOMES = ["💧 Tache au plafond", "🚿 Ça goutte en ce moment", "🌊 Beaucoup d'eau", "🧱 Mur mouillé", "⚡ Près de l'électricité", "🪟 Autour d'une fenêtre", "❓ Autre"];
+function nouvelleDemande() {
+  const brouillon = localStorage.getItem("rdf_nd_brouillon");
+  ND = brouillon ? JSON.parse(brouillon) : { etape: 1, type: "", adresse: "", residence: "", complement: "", client: "", contact: "", sur: "", telSur: "", symptomes: [], urgent: false, texte: "" };
+  if (ND.etape > 5) ND.etape = 1;
+  vueCourante = "nouvelle"; history.pushState({}, ""); rendre(); window.scrollTo(0, 0);
+}
+function ndSauver() { localStorage.setItem("rdf_nd_brouillon", JSON.stringify(ND)); }
+function ndChamp(k, v) { ND[k] = v; ndSauver(); }
+function ndAller(n) { ND.etape = n; ndSauver(); rendre(); window.scrollTo(0, 0); }
+function ndAbandon() { if (!confirm("Abandonner cette demande ?")) return; localStorage.removeItem("rdf_nd_brouillon"); ND = null; vueCourante = "liste"; rendre(); }
+function inp(k, ph, type) { return "<input type='" + (type || "text") + "' value='" + esc(ND[k]) + "' placeholder='" + esc(ph || "") + "' oninput=\"ndChamp('" + k + "',this.value)\"" + (type === "tel" ? " inputmode='tel'" : "") + ">"; }
+function rendreNouvelle() {
+  titre("Nouvelle recherche de fuite", "Étape " + Math.min(ND.etape, 5) + " sur 5", true);
+  let h = "<div class='etapes-nd'>" + [1, 2, 3, 4, 5].map((i) => "<div class='" + (i < ND.etape ? "ok" : i === ND.etape ? "cur" : "") + "'></div>").join("") + "</div>";
+  const nav = (suivOk, label) => "<div class='nav-nd'>" + (ND.etape > 1 ? "<button class='btn gris' style='flex:1' onclick='ndAller(" + (ND.etape - 1) + ")'>‹ Retour</button>" : "<button class='btn gris' style='flex:1' onclick='ndAbandon()'>Annuler</button>") +
+    "<button class='btn" + (suivOk ? "" : " gris") + "' style='flex:2' onclick='ndSuivant()'>" + (label || "Suivant ›") + "</button></div>";
+  if (ND.etape === 1) {
+    h += "<div class='q-titre'>C'est pour qui ? 🤔</div><div class='q-sous'>Touche la bonne case.</div>" +
+      TYPES_ND.map((t) => "<button class='choix" + (ND.type === t.k ? " sel" : "") + "' onclick=\"ndChamp('type','" + t.k + "');ndAller(2)\"><b>" + t.ic + "</b><span>" + t.l + "<br><span class='mini'>" + t.s + "</span></span></button>").join("") +
+      "<button class='btn gris' onclick='ndAbandon()'>Annuler</button>";
+  } else if (ND.etape === 2) {
+    h += "<div class='q-titre'>C'est où ? 📍</div><div class='q-sous'>Si tu es sur place, le téléphone peut trouver l'adresse tout seul.</div>" +
+      "<button class='btn' id='nd-gps' onclick='ndPosition()'>📍 Je suis sur place : trouver l'adresse</button>" +
+      "<div class='champ'><label>Adresse de la fuite</label>" + inp("adresse", "N°, rue, code postal, ville") + "</div>" +
+      (ND.type !== "Particulier" ? "<div class='champ'><label>Nom de la résidence / du bâtiment <span class='opt'>(si tu le connais)</span></label>" + inp("residence", "ex. Résidence Les Tilleuls") + "</div>" : "") +
+      "<div class='champ'><label>Bâtiment, étage, appartement <span class='opt'>(facultatif)</span></label>" + inp("complement", "ex. Bât. B, 4e étage, appt 42") + "</div>" + nav(!!ND.adresse.trim());
+  } else if (ND.etape === 3) {
+    const lib = ND.type === "Particulier" ? "Nom du client" : ND.type === "Agence / syndic" ? "Nom de l'agence ou du syndic" : "Nom de l'entreprise";
+    h += "<div class='q-titre'>Qui contacter ? 📞</div><div class='q-sous'>Mets ce que tu sais — le bureau complètera le reste.</div>" +
+      "<div class='champ'><label>" + lib + " <span class='opt'>(si tu le connais)</span></label>" + inp("client", ND.type === "Agence / syndic" ? "ex. FONCIA, CITYA…" : "ex. M. Dupont") + "</div>" +
+      (ND.type === "Agence / syndic" ? "<div class='champ'><label>Gestionnaire <span class='opt'>(facultatif)</span></label>" + inp("contact", "ex. Mme Durand") + "</div>" : "") +
+      "<div class='champ'><label>Personne sur place <span class='opt'>(gardien, occupant…)</span></label>" + inp("sur", "Nom") + "</div>" +
+      "<div class='champ'><label>Son téléphone</label>" + inp("telSur", "06 …", "tel") + "</div>" + nav(true);
+  } else if (ND.etape === 4) {
+    h += "<div class='q-titre'>Qu'est-ce qui se passe ? 💧</div><div class='q-sous'>Touche tout ce qui correspond.</div><div class='chips' style='margin-bottom:14px'>" +
+      SYMPTOMES.map((x, i) => "<button class='chip" + (ND.symptomes.indexOf(x) >= 0 ? " sel" : "") + "' onclick='ndSymptome(" + i + ")'>" + x + "</button>").join("") + "</div>" +
+      "<button class='urgent" + (ND.urgent ? " sel" : "") + "' onclick=\"ndChamp('urgent'," + (!ND.urgent) + ");rendre()\"><span style='font-size:30px'>" + (ND.urgent ? "🔴" : "⚪") + "</span>C'est urgent !</button>" +
+      "<div class='champ'><label>Explique en quelques mots <span class='opt'>(tu peux dicter avec le 🎤 du clavier)</span></label><textarea oninput=\"ndChamp('texte',this.value)\" placeholder='Où coule l&#39;eau, depuis quand, ce que tu vois…'>" + esc(ND.texte) + "</textarea></div>" + nav(true);
+  } else if (ND.etape === 5) {
+    const t = TYPES_ND.find((x) => x.k === ND.type) || TYPES_ND[0];
+    h += "<div class='q-titre'>On fait quoi ? 🚀</div><div class='carte'>" +
+      ligne("Pour", t.ic + " " + esc(ND.client || t.l)) + ligne("Où", esc(ND.residence ? ND.residence + " — " : "") + esc(ND.adresse) + (ND.complement ? "<br>" + esc(ND.complement) : "")) +
+      ligne("Sur place", esc(ND.sur) + (ND.telSur ? " " + esc(ND.telSur) : "")) + ligne("Problème", esc(ND.symptomes.join(", ")) + (ND.texte ? "<br>" + esc(ND.texte) : "")) +
+      (ND.urgent ? "<div style='margin-top:8px'><span class='badge r'>🔴 URGENT</span></div>" : "") + "</div>" +
+      "<button class='btn vert' style='font-size:19px;padding:18px' onclick='ndCreer(true)'>🔍 Je fais la recherche maintenant</button>" +
+      "<button class='btn' style='font-size:17px' onclick='ndCreer(false)'>📨 J'envoie juste la demande au bureau</button>" +
+      "<button class='btn gris' onclick='ndAller(4)'>‹ Retour</button>";
+  } else {
+    h = "<div class='fete'><div class='e'>" + (ND.maintenant ? "🔍" : "🎉") + "</div><div class='q-titre'>" + (ND.maintenant ? "C'est parti !" : "Demande envoyée !") + "</div><div class='q-sous'>" +
+      (ND.maintenant ? "Le dossier est créé. Réponds aux questions et prends tes photos, comme d'habitude." : "Le bureau la reçoit et va la programmer. Merci ! 👍") + "</div>" +
+      (ND.maintenant ? "<button class='btn vert' onclick=\"ouvrirDossier('" + ND.id + "');ongletDossier='qcm';rendre()\">Commencer ›</button>" : "<button class='btn' onclick=\"vueCourante='liste';rendre()\">Retour à mes dossiers</button>") + "</div>";
+  }
+  $("vue").innerHTML = h;
+}
+function ndSymptome(i) { const x = SYMPTOMES[i], k = ND.symptomes.indexOf(x); if (k >= 0) ND.symptomes.splice(k, 1); else ND.symptomes.push(x); ndSauver(); rendre(); }
+function ndSuivant() {
+  if (ND.etape === 2 && !ND.adresse.trim()) { toast("Indique l'adresse (ou touche 📍)."); return; }
+  ndAller(ND.etape + 1);
+}
+function ndPosition() {
+  if (!navigator.geolocation) { toast("Localisation non disponible sur ce téléphone."); return; }
+  $("nd-gps").textContent = "📡 Recherche de ta position…";
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    try {
+      const r = await fetch("https://api-adresse.data.gouv.fr/reverse/?lon=" + pos.coords.longitude + "&lat=" + pos.coords.latitude);
+      const j = await r.json(); const f = j.features && j.features[0];
+      if (f) { ND.adresse = f.properties.label; ND.gps = pos.coords.latitude.toFixed(5) + "," + pos.coords.longitude.toFixed(5); ndSauver(); rendre(); toast("📍 Adresse trouvée — vérifie-la !"); }
+      else { toast("Adresse introuvable : tape-la."); rendre(); }
+    } catch (e) { toast("Pas de réseau pour trouver l'adresse : tape-la."); rendre(); }
+  }, () => { toast("Localisation refusée : tape l'adresse."); rendre(); }, { enableHighAccuracy: true, timeout: 15000 });
+}
+const propre = (x) => String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[\\/:*?"<>|#%]/g, " ").replace(/\s+/g, " ").trim();
+function cheminNouveauDossier(d) {
+  const an = d.date.substring(0, 4), cat = /agence|syndic/i.test(d.typeClient) ? "AGENCES" : /particulier/i.test(d.typeClient) ? "PARTICULIERS" : "ENTREPRISES";
+  let p = (CFG.racineDossiers || "MESSENT ASSISTANCE") + "/" + an + "/RECHERCHE DE FUITE/" + cat;
+  if (cat === "AGENCES" && d.client && d.client !== "À COMPLÉTER") p += "/" + propre(d.client);
+  const nom = propre((d.ailleurs && d.chantier) || (d.client !== "À COMPLÉTER" ? d.client : "") || d.adChantier || d.adresse).substring(0, 60);
+  return p + "/" + nom + " - " + d.date.split("-").reverse().join("-");
+}
+async function ndCreer(maintenant) {
+  const n = new Date(), id = "t" + n.getTime().toString(36) + Math.random().toString(36).slice(2, 5);
+  const agence = ND.type !== "Particulier";
+  const note = [ND.symptomes.join(", "), ND.texte.trim()].filter(Boolean).join(" — ");
+  const d = { id, cree: today(), date: today(), origine: "Téléphone (technicien)", depuisTel: true, aCompleter: true, creePar: MOI,
+    typeClient: ND.type || "Particulier", client: ND.client.trim() || "À COMPLÉTER", contact: ND.contact.trim(), tel: "", mail: "",
+    adresse: agence ? "" : ND.adresse.trim(), ailleurs: agence, chantier: agence ? ND.residence.trim() : "", adChantier: agence ? ND.adresse.trim() : "",
+    batiment: ND.complement.trim(), contactSite: ND.sur.trim(), telSite: ND.telSur.trim(), urgence: !!ND.urgent, note, gps: ND.gps || "",
+    tech: maintenant ? MOI : "", tech2: "", datePrevue: maintenant ? today() : "", heure: maintenant ? pad(n.getHours()) + "h" + pad(n.getMinutes()) : "",
+    programme: maintenant, sa: "" };
+  if (maintenant) d.dossier = "SP:" + cheminNouveauDossier(d).replace(/\//g, "\\");
+  const a = demandesLocales(); a.push(d); sauverDemandesLocales(a);
+  const blob = new Blob([JSON.stringify(d, null, 1)], { type: "application/json" });
+  await fileAjouter({ path: (CFG.demandesPath || "MESSENT ASSISTANCE/APPLICATION/RECHERCHE DE FUITE/DEMANDES TELEPHONE") + "/" + id + ".json", blob, type: "application/json", genre: "demande", ajout: Date.now() });
+  if (maintenant) { const e = etat(id); e.debut = nowISO(); localStorage.setItem(cleEtat(id), JSON.stringify(e)); await mettreFicheEnFile(id); }
+  localStorage.removeItem("rdf_nd_brouillon");
+  ND = { etape: 6, id, maintenant }; majFile(); traiterFile(); rendre(); window.scrollTo(0, 0);
+}
+
 /* ---------- démarrage ---------- */
 (async function demarrer() {
   if (DEMO) $("demo-band").style.display = "block";
   if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
-  try { await ouvrirDB(); } catch (e) { afficherErreur("Stockage du téléphone indisponible."); return; }
+  try { await ouvrirDB(); } catch (e) { if (!DEMO) { afficherErreur("Stockage du téléphone indisponible."); return; } db = null; }
   const ok = await initAuth();
   if (!DEMO && !ok) { if (msalApp) { vueCourante = "connexion"; rendre(); } return; }
   if (!(await chargerDonnees())) return;

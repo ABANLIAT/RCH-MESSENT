@@ -14,7 +14,13 @@ window.RDF_CONFIG = {
   sitePath: "/sites/MESSENT",
 
   /* Fichier de données écrit par l'appli bureau (chemin dans « Documents partagés ») */
-  dataPath: "CHANTIERS/2026/RECHERCHE DE FUITE/_APPLICATION/donnees_fuites.json",
+  dataPath: "MESSENT ASSISTANCE/APPLICATION/RECHERCHE DE FUITE/donnees_fuites.json",
+
+  /* Où les téléphones déposent les demandes qu'ils créent (le bureau les récupère) */
+  demandesPath: "MESSENT ASSISTANCE/APPLICATION/RECHERCHE DE FUITE/DEMANDES TELEPHONE",
+
+  /* Racine des dossiers d'intervention : <racine>/<année>/RECHERCHE DE FUITE/AGENCES|ENTREPRISES|PARTICULIERS */
+  racineDossiers: "MESSENT ASSISTANCE",
 
   /* Facultatif : lien de partage du dossier RECHERCHE DE FUITE, si les ouvriers
      n'ont pas accès au site entier (sinon laisser vide) */
