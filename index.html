@@ -770,7 +770,7 @@ function cheminNouveauDossier(d) {
   let p = (CFG.racineDossiers || "MESSENT ASSISTANCE") + "/" + an + "/RECHERCHE DE FUITE/" + cat;
   if (cat === "AGENCES" && d.client && d.client !== "À COMPLÉTER") p += "/" + propre(d.client);
   const nom = propre((d.ailleurs && d.chantier) || (d.client !== "À COMPLÉTER" ? d.client : "") || d.adChantier || d.adresse).substring(0, 60);
-  return p + "/" + nom + " - " + d.date.split("-").reverse().join("-");
+  return p + "/" + nom + " - " + d.date.split("-").reverse().join("-") + (d.heure ? " " + d.heure : "");
 }
 async function ndCreer(maintenant) {
   const n = new Date(), id = "t" + n.getTime().toString(36) + Math.random().toString(36).slice(2, 5);
